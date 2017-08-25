@@ -14,6 +14,61 @@ import pandas
 import fprocessing
 
 
+#TODO - Read DTW values obtained by Mei
+#       These will be computed for the sinewave's Discrete Wavelet Transform
+#Build an appropriate matrix for the clustering algorithms
+def FeedDistanceMatrix(): 
+    matrix = np.loadtxt("distance_matrix.txt")
+    print matrix
+
+
+#########################################################
+#Clusters samples based on DTW distance-matrix
+# Returns the label of each sample to use it as a feature
+#########################################################
+def ClusterByDTW(feature, sampleFiles):
+    #Debugging Purposes
+    #distance_matrix = np.random.rand(20,20)
+
+    #Fix a reference for each config - compute DTW against ref.
+    #distance_matrix = ComputeSimilarity_All_vs_Reference(feature,sampleFiles)
+
+    #Compute DTW for each sample in an All vs All fashion
+    #distance_matrix = ComputeSimilarity_All_vs_All(feature,sampleFiles)
+
+    # Feed DiscreteWaveletTransform DTW matrix built by Mei
+    distance_matrix = FeedDistanceMatrix()
+
+    ward = AgglomerativeClustering(n_clusters=4, linkage='ward').fit(distance_matrix)
+    ward_labels = ward.labels_
+    print "Agglomerative-ward linkage clusters - " + type(feature).__name__ 
+    print(ward_labels)
+
+
+    complete = AgglomerativeClustering(n_clusters=4, linkage='complete').fit(distance_matrix)
+    complete_labels = complete.labels_
+    print "Agglomerative-complete linkage clusters - " + type(feature).__name__ 
+    print(complete_labels)
+
+
+    whitened = whiten(distance_matrix)
+    centroids, kmeans_labels = kmeans2(whitened, 4, minit='random')
+    print "K-means clusters - " + type(feature).__name__ 
+    print(kmeans_labels)
+
+    print "======================================================"
+
+    clusterResults = {'Agg_ward': ward_labels, 'Agg_comp': complete_labels, 'K-means': kmeans_labels}
+    return clusterResults
+
+
+
+# Mostly deprecated code follows
+#  - Clustering sinewaves by Euclidean distance did not prove to be promising
+#  - Clustering sinewaves by DTW distance required a high number of operations
+#     with no visible payoff
+#
+
 
 #########################################
 #Computes DTW distance between two series
@@ -112,44 +167,6 @@ def ComputeSlicedSimilarity_All_vs_Reference(feature,sampleFiles):
     return dtw_distance_matrix
 
 
-#########################################################
-#Clusters samples based on DTW distance-matrix
-# Returns the label of each sample to use it as a feature #TODO
-#########################################################
-def ClusterBySlicedDTW(feature, sampleFiles):
-    #Debugging Purposes
-    #X = np.random.rand(20,20)
-
-    X = ComputeSlicedSimilarity_All_vs_Reference(feature,sampleFiles)
-    #X = ComputeSlicedSimilarity_All_vs_All(feature,sampleFiles)
-
-    slices = []
-
-
-
-    ward = AgglomerativeClustering(n_clusters=4, linkage='ward').fit(X)
-    ward_labels = ward.labels_
-    print "Agglomerative-ward linkage clusters - " + type(feature).__name__ 
-    print(ward_labels)
-
-
-    complete = AgglomerativeClustering(n_clusters=4, linkage='complete').fit(X)
-    complete_labels = complete.labels_
-    print "Agglomerative-complete linkage clusters - " + type(feature).__name__ 
-    print(complete_labels)
-
-
-    whitened = whiten(X)
-    centroids, kmeans_labels = kmeans2(whitened, 4, minit='points')
-    print "K-means clusters - " + type(feature).__name__ 
-    print(kmeans_labels)
-
-    print "======================================================"
-
-    clusterResults = {'Agg_ward': ward_labels, 'Agg_comp': complete_labels, 'K-means': kmeans_labels}
-    return clusterResults
-
-
 
 ##############################################################################
 #Computes similarity matrix between each sample to one reference configuration
@@ -170,7 +187,7 @@ def ComputeSimilarity_All_vs_Reference(feature,sampleFiles):
         maximum = timeseries[feature.getTags()[0]].max()
 
 
-        for i in range(0,maximum+1):#maximum+1
+        for i in range(0,maximum+1):
             sample_distances = []
             sample_data = timeseries[getattr(timeseries, feature.getTags()[0]) == i]#.groupby(lambda x: x/8).mean() #8x downsample
 
@@ -212,7 +229,7 @@ def ComputeSimilarity_All_vs_All(feature,sampleFiles):
         maximum = timeseries[feature.getTags()[0]].max()
 
 
-        for i in range(0,maximum):#maximum+1
+        for i in range(0,maximum+1):
             sample_distances = []
             sample_data = timeseries[getattr(timeseries, feature.getTags()[0]) == i]
 
@@ -220,7 +237,7 @@ def ComputeSimilarity_All_vs_All(feature,sampleFiles):
                 timeseries2 = series[n2]
                 maximum2 = timeseries2[feature.getTags()[0]].max()
 
-                for i2 in range(0,maximum2):#maximum2+1
+                for i2 in range(0,maximum2+1):
                     sample_data2 = timeseries2[getattr(timeseries2, feature.getTags()[0]) == i2]
 
                     print "Computing " + type(feature).__name__ + " DTW between " + sampleFile + ": " + str(i) + " and " + sampleFile2 + ": " + str(i2)
@@ -233,47 +250,8 @@ def ComputeSimilarity_All_vs_All(feature,sampleFiles):
 
     return dtw_distance_matrix
 
-def FeedDistanceMatrix(): #TODO - Just a placeholder
-    matrix = np.loadtxt("distance_matrix.txt")
-    print matrix
-    
-    return matrix
-
-#########################################################
-#Clusters samples based on DTW distance-matrix
-# Returns the label of each sample to use it as a feature
-#########################################################
-def ClusterByDTW(feature, sampleFiles):
-    #Debugging Purposes
-    #X = np.random.rand(20,20)
-
-    #X = ComputeSimilarity_All_vs_Reference(feature,sampleFiles)
-    #X = ComputeSimilarity_All_vs_All(feature,sampleFiles)
-
-    # Feed DiscreteWaveletTransform DTW matrix built by Mei
-    X = FeedDistanceMatrix()
-
-    ward = AgglomerativeClustering(n_clusters=4, linkage='ward').fit(X)
-    ward_labels = ward.labels_
-    print "Agglomerative-ward linkage clusters - " + type(feature).__name__ 
-    print(ward_labels)
 
 
-    complete = AgglomerativeClustering(n_clusters=4, linkage='complete').fit(X)
-    complete_labels = complete.labels_
-    print "Agglomerative-complete linkage clusters - " + type(feature).__name__ 
-    print(complete_labels)
-
-
-    whitened = whiten(X)
-    centroids, kmeans_labels = kmeans2(whitened, 4, minit='random')
-    print "K-means clusters - " + type(feature).__name__ 
-    print(kmeans_labels)
-
-    print "======================================================"
-
-    clusterResults = {'Agg_ward': ward_labels, 'Agg_comp': complete_labels, 'K-means': kmeans_labels}
-    return clusterResults
 
 
 
