@@ -33,7 +33,7 @@ def FeedDistanceMatrix():
     
 
     # Turn each mic_dtw vector into individual features
-    # Clustering algorithms can only receive matrixes at most rank > 2
+    # Clustering algorithms can only receive matrixes at most rank = 2
     flat_matrix = []
     for row in matrix:
         features = []
