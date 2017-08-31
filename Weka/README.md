@@ -93,6 +93,24 @@ Summary: Generate and manipulate Open XML PowerPoint (.pptx) files
 Home-page: http://github.com/scanny/python-pptx
 
 
+#### fastdtw
+
+Version: 0.3.2
+
+Summary: Python implementation of FastDTW, which is an approximate Dynamic Time Warping (DTW) algorithm that provides optimal or near-optimal alignments with an O(N) time and memory complexity.
+
+Home-page: https://pypi.python.org/pypi/fastdtw
+
+
+#### ucrdtw
+
+Version: 0.201
+
+Summary: Python extension for UCR Suite highly optimized subsequence search using Dynamic Time Warping (DTW)
+
+Home-page: https://github.com/klon/ucrdtw
+
+
 #### termcolor
 
 Version: 1.1.0
