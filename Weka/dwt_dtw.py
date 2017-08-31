@@ -7,12 +7,15 @@ from scipy.spatial.distance import euclidean, pdist, squareform
 
 
 def FeedDistanceMatrix():
-    dwt_dtw_matrix = np.loadtxt("diogo_test_swipe_45cm_45_matrix.txt")
-    
+    dtw_file = "/home/dmbb/Documents/GestureRecog/dtw/diogo_test_swipe_45cm_45.txt"
+    #The original file contains data for filling an upper triangular distance matrix
+    dwt_dtw_matrix = np.loadtxt(dtw_file)
+
+    #Build a square matrix
     max_sample = int(np.max(dwt_dtw_matrix,axis=0)[0])
     matrix = np.empty((max_sample+1, max_sample+1), dtype=object)
 
-
+    #Fill the upper triangle of the square distance matrix
     for l in dwt_dtw_matrix:
         mics = []
         mics.append(l[2])
@@ -20,17 +23,18 @@ def FeedDistanceMatrix():
         mics.append(l[4])
         mics.append(l[5])
         matrix[int(l[0])-1,int(l[1])-1] = mics
-    
-    for n in range(0,max_sample+1):
-        matrix[n,n] = [0,0,0,0] #Diagonal is zeros
 
-    #Make matrix symmetric
-    i_lower = np.tril_indices(max_sample+1, -1) 
+    #Set matrix diagonal to zeros (comparisons of the same samples)
+    for n in range(0,max_sample+1):
+        matrix[n,n] = [0,0,0,0]
+
+    #Make the square matrix symmetric
+    i_lower = np.tril_indices(max_sample+1, -1)
     matrix[i_lower] = matrix.T[i_lower]
 
     #Convert numpy array to python list
     matrix = matrix.tolist()
-    
+
 
     # Turn each mic_dtw vector into individual features
     # Clustering algorithms can only receive matrixes at most rank = 2
@@ -73,6 +77,5 @@ def ClusterByDTW():
 
     print "======================================================"
 
-ClusterByDTW()
-
-
+if __name__ == "__main__":
+    ClusterByDTW()
