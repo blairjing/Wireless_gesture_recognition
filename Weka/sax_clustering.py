@@ -50,6 +50,8 @@ def ComputeSax(sample_data, sample_data2):
 
 #TODO: Just compute the upper triangular and generate the square matrix afterwards
 def ComputeSimilarity_All_vs_All(feature, sampleFiles):
+    sampleFiles = sorted(sampleFiles)
+
     SAX_distance_matrix = [] #row = sample, column = distance
     series = []
 
@@ -132,6 +134,7 @@ if __name__ == "__main__":
         #Account just for data from one person
         if 'diogo' in str(f):
             sampleFiles.append(f)
+
 
     print '--------------\nsampleFiles:'
     print sampleFiles
