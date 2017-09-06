@@ -2,6 +2,8 @@
 
 The goal and functioning of the different scripts contained in this folder is summarily described below. Dependencies from third-party packages/applications can be found at the end of this document.
 
+### Dataset-Generator Scripts
+
 `extractor.py` - includes the code for managing feature selection and dataset creation. In it's main method, we can define the folder containing data to be analyzed and which kind of features we want to extract from that data (ex. `fprocessing.RmNoise(input/20170726_rmNoise')` declares we want to extract aggregate features from a sinewave which noise has been removed and which sample data can be found in `input/20170726_rmNoise` folder.
 
 If the global variable `COMPUTE_DTW` is set to `True`, samples will be clustered by DTW and the resulting labels will be included as an extra feature on the final dataset.
@@ -20,7 +22,8 @@ Each individual data configuration will originate an accompanying .csv file with
 
 `datasetGen.py` - Merges the features obtained for individual configurations for generating a Training and a Testing dataset. The samples to be used for building each dataset must be placed into user-defined "Training" and "Testing" folders.
 
----
+
+### Supervised Classification Scripts
 
 `ml.py` - run WEKA classifiers on datasets.
 
@@ -33,7 +36,18 @@ Provides 3 main methods for classification:
 * `CrossValidateFullDataset()` allows for training and testing a model with a single dataset by employing cross-validation.
 
 
+### Unsupervised Clustering Scripts
+
+The following scripts are stand-alone, i.e. they are not called on `extractor.py`. These are used to test the ability of different distance metrics on the clustering of our data.
+
+`dwt_dtw.py` - This script reads an upper triangular matrix containing DTW distances computed from the Wavelet transform of data samples. The matrix is converted to its square form and fed to different clustering algorithms. *Method in use: DTW.*
+
 ---
+
+`sax_clustering.py` - This script reads any data sample (raw, removed noise, doppler, etc) and computes a distance matrix using Symbolic Aggregate approXimation (SAX). The matrix is fed to different clustering methods. *Method in use: SAX.*
+
+
+### Auxiliary Scripts
 
 `ml_utilities.py` - contains auxiliary functions for building datasets. In particular, `MergeCSV()` is used for combining features of individual configurations into a larger dataset.
 
