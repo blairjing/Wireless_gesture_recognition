@@ -17,7 +17,7 @@ import fprocessing
 #TODO - Read DTW values obtained by Mei
 #       These will be computed for the sinewave's Discrete Wavelet Transform
 #Build an appropriate matrix for the clustering algorithms
-def FeedDistanceMatrix(): 
+def FeedDistanceMatrix():
     matrix = np.loadtxt("distance_matrix.txt")
     print matrix
 
@@ -41,19 +41,19 @@ def ClusterByDTW(feature, sampleFiles):
 
     ward = AgglomerativeClustering(n_clusters=4, linkage='ward').fit(distance_matrix)
     ward_labels = ward.labels_
-    print "Agglomerative-ward linkage clusters - " + type(feature).__name__ 
+    print "Agglomerative-ward linkage clusters - " + type(feature).__name__
     print(ward_labels)
 
 
     complete = AgglomerativeClustering(n_clusters=4, linkage='complete').fit(distance_matrix)
     complete_labels = complete.labels_
-    print "Agglomerative-complete linkage clusters - " + type(feature).__name__ 
+    print "Agglomerative-complete linkage clusters - " + type(feature).__name__
     print(complete_labels)
 
 
     whitened = whiten(distance_matrix)
     centroids, kmeans_labels = kmeans2(whitened, 4, minit='random')
-    print "K-means clusters - " + type(feature).__name__ 
+    print "K-means clusters - " + type(feature).__name__
     print(kmeans_labels)
 
     print "======================================================"
@@ -77,12 +77,12 @@ def ComputeDTW(sample_data, sample_data2):
     #Read tsFresh tables for all gestures
     sample_data = sample_data.as_matrix()
     sample_data2 = sample_data2.as_matrix()
-        
+
 
     mic_distances = []
     for mic in range(1,5):
         #distance, path = dtw(sample_data[:,mic], sample_data2[:,mic], dist=euclidean)
-        loc, distance = _ucrdtw.ucrdtw(stats.zscore(sample_data[:,mic]), stats.zscore(sample_data2[:,mic]), 0.05) 
+        loc, distance = _ucrdtw.ucrdtw(stats.zscore(sample_data[:,mic]), stats.zscore(sample_data2[:,mic]), 0.05)
 
         #Print results
         mic_distances.append(distance)
@@ -97,8 +97,8 @@ def ComputeEuclidean(sample_data, sample_data2):
     #Read tsFresh tables for all gestures
     sample_data = sample_data.as_matrix()
     sample_data2 = sample_data2.as_matrix()
-    
-    
+
+
     mic_distances = []
     for mic in range(1,2):
         #Adjust timeseries size - cut by smaller
@@ -106,7 +106,7 @@ def ComputeEuclidean(sample_data, sample_data2):
         sample2_data_size = len(sample_data2[:,mic])
 
         cutoff = min(sample_data_size, sample2_data_size)
-        distance = euclidean(sample_data[:cutoff,mic], sample_data2[:cutoff,mic]) 
+        distance = euclidean(sample_data[:cutoff,mic], sample_data2[:cutoff,mic])
 
         #Print results
         mic_distances.append(distance)
@@ -114,67 +114,14 @@ def ComputeEuclidean(sample_data, sample_data2):
 
     return mic_distances
 
-##############################################################################
-#Computes similarity matrix between each sample to one reference configuration
-# Each sample is compared to a reference of a gesture performed by a different 
-#  person and configuration (less costly than All vs All)
-
-#On this sliced version, DTW is computed for slices of the timeseries data #TODO
-##############################################################################
-def ComputeSlicedSimilarity_All_vs_Reference(feature,sampleFiles):
-    slice_number = 3
-    distance_matrixes = []
-     
-    series = []
-    print "Reading timeseries from disk..."
-    for sampleFile in sampleFiles:
-        series.append(pandas.read_table(feature.getAnalysisFolder() + '/freshData_' + sampleFile + '.txt', delim_whitespace=True, names=feature.getTags()))
-
-    
-
-    dtw_distance_matrix = [] #row = sample, column = distance
-
-    for n, sampleFile in enumerate(sampleFiles):
-        timeseries = series[n]
-        
-        num_samples = timeseries[feature.getTags()[0]].max()
-        datapoints_per_sample = timeseries[getattr(timeseries, feature.getTags()[0]) == 0].shape[0]
-        slice_size = datapoints_per_sample / slice_number
-
-        dtw_distance_matrix = [] # cell = "slice_number" distance matrixes
-
-        for i in range(0,slice_number): 
-            slice_distance_matrix = []
-
-            for n in range(0,num_samples):#maximum+1
-                sample_distances = []
-                sample_data = timeseries[getattr(timeseries, feature.getTags()[0]) == i][i*slice_size:(i+1)*slice_size]
-
-                for n2, sampleFile2 in enumerate(sampleFiles):
-                    timeseries2 = series[n2]
-
-                    for i2 in range(0,1):#maximum2+1
-                        sample_data2 = timeseries2[getattr(timeseries2, feature.getTags()[0]) == i2][i*slice_size:(i+1)*slice_size]
-                        print "Computing " + type(feature).__name__ + " DTW between " + sampleFile + ": " + str(i) + " and " + sampleFile2 + ": " + str(i2) + " - Slice: " + str(i)
-                        mic_distances = ComputeDTW(sample_data,sample_data2)
-                        sample_distances.append(mic_distances[0])
-                        sample_distances.append(mic_distances[1])
-                        sample_distances.append(mic_distances[2])
-                        sample_distances.append(mic_distances[3])
-                slice_distance_matrix.append(sample_distances) #Append a slice
-            dtw_distance_matrix.append(slice_distance_matrix) #Append all slices
-
-    return dtw_distance_matrix
-
-
 
 ##############################################################################
 #Computes similarity matrix between each sample to one reference configuration
-# Each sample is compared to a reference of a gesture performed by a different 
+# Each sample is compared to a reference of a gesture performed by a different
 #  person and configuration (less costly than All vs All)
 ##############################################################################
 def ComputeSimilarity_All_vs_Reference(feature,sampleFiles):
-    dtw_distance_matrix = [] #row = sample, column = distance  
+    dtw_distance_matrix = [] #row = sample, column = distance
     series = []
 
     print "Reading timeseries from disk..."
@@ -183,7 +130,7 @@ def ComputeSimilarity_All_vs_Reference(feature,sampleFiles):
 
     for n, sampleFile in enumerate(sampleFiles):
         timeseries = series[n]
-        
+
         maximum = timeseries[feature.getTags()[0]].max()
 
 
@@ -216,7 +163,7 @@ def ComputeSimilarity_All_vs_Reference(feature,sampleFiles):
 #  gestures and configurations (Cost is probably prohibitive)
 #########################################################################
 def ComputeSimilarity_All_vs_All(feature,sampleFiles):
-    dtw_distance_matrix = [] #row = sample, column = distance  
+    dtw_distance_matrix = [] #row = sample, column = distance
     series = []
 
     print "Reading timeseries from disk..."
@@ -225,7 +172,7 @@ def ComputeSimilarity_All_vs_All(feature,sampleFiles):
 
     for n, sampleFile in enumerate(sampleFiles):
         timeseries = series[n]
-        
+
         maximum = timeseries[feature.getTags()[0]].max()
 
 
@@ -249,10 +196,3 @@ def ComputeSimilarity_All_vs_All(feature,sampleFiles):
             dtw_distance_matrix.append(sample_distances)
 
     return dtw_distance_matrix
-
-
-
-
-
-
-
