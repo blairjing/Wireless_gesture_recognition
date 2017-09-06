@@ -11,6 +11,7 @@ from scipy.spatial.distance import euclidean, pdist, squareform
 import pandas
 import os
 from os.path import basename
+from termcolor import colored
 
 from saxpy import SAX
 
@@ -43,9 +44,8 @@ def ComputeSax(sample_data, sample_data2):
 
         x1x2ComparisonScore = s.compare_strings(x1String, x2String)
 
-        #Print results
         mic_distances.append(x1x2ComparisonScore)
-        print "Mic: " + str(mic) + ", distance= " + str(x1x2ComparisonScore)
+        #print "Mic: " + str(mic) + ", distance= " + str(x1x2ComparisonScore)
     return mic_distances
 
 #TODO: Just compute the upper triangular and generate the square matrix afterwards
@@ -54,16 +54,19 @@ def ComputeSimilarity_All_vs_All(feature, sampleFiles):
 
     SAX_distance_matrix = [] #row = sample, column = distance
     series = []
+    n_samples = []
 
     print "Reading timeseries from disk..."
     for sampleFile in sampleFiles:
         series.append(pandas.read_table(feature.getAnalysisFolder() + '/freshData_' + sampleFile + '.txt', delim_whitespace=True, names=feature.getTags()))
 
+    print "Computing SAX distance matrix"
     for n, sampleFile in enumerate(sampleFiles):
+        print "Comparing " + sampleFile
         timeseries = series[n]
 
         maximum = timeseries[feature.getTags()[0]].max()
-
+        n_samples.append(maximum+1)
 
         for i in range(0,maximum+1):
             sample_distances = []
@@ -76,7 +79,7 @@ def ComputeSimilarity_All_vs_All(feature, sampleFiles):
                 for i2 in range(0,maximum2+1):
                     sample_data2 = timeseries2[getattr(timeseries2, feature.getTags()[0]) == i2]
 
-                    print "Computing " + type(feature).__name__ + " SAX between " + sampleFile + ": " + str(i) + " and " + sampleFile2 + ": " + str(i2)
+                    #print "Computing " + type(feature).__name__ + " SAX between " + sampleFile + ": " + str(i) + " and " + sampleFile2 + ": " + str(i2)
                     mic_distances = ComputeSax(sample_data,sample_data2)
                     sample_distances.append(mic_distances[0])
                     sample_distances.append(mic_distances[1])
@@ -84,35 +87,36 @@ def ComputeSimilarity_All_vs_All(feature, sampleFiles):
                     sample_distances.append(mic_distances[3])
             SAX_distance_matrix.append(sample_distances)
 
-    return SAX_distance_matrix
+    return n_samples, SAX_distance_matrix
 
 
 
 def ClusterBySAX(feature, sampleFiles):
 
-    distance_matrix = ComputeSimilarity_All_vs_All(feature,sampleFiles)
+    n_samples, distance_matrix = ComputeSimilarity_All_vs_All(feature,sampleFiles)
 
     ward = AgglomerativeClustering(n_clusters=4, linkage='ward').fit(distance_matrix)
     ward_labels = ward.labels_
-    print "Agglomerative-ward linkage clusters - " + type(feature).__name__
-    print(ward_labels)
-
 
     complete = AgglomerativeClustering(n_clusters=4, linkage='complete').fit(distance_matrix)
     complete_labels = complete.labels_
-    print "Agglomerative-complete linkage clusters - " + type(feature).__name__
-    print(complete_labels)
-
 
     whitened = whiten(distance_matrix)
     centroids, kmeans_labels = kmeans2(whitened, 4, minit='random')
-    print "K-means clusters - " + type(feature).__name__
-    print(kmeans_labels)
-
-    print "======================================================"
 
     clusterResults = {'Agg_ward': ward_labels, 'Agg_comp': complete_labels, 'K-means': kmeans_labels}
-    return clusterResults
+    return n_samples, clusterResults
+
+
+def PrintResults(labels,sampleFiles, n_samples):
+    configuration_list = sorted(sampleFiles)
+
+    for k in labels:
+        print colored(k,"red")
+        for n, config in enumerate(configuration_list):
+            print config + "\t" + str(labels[k][:int(n_samples[n])])
+            labels[k] = labels[k][int(n_samples[n]):]
+        print "#################################################\n"
 
 
 if __name__ == "__main__":
@@ -137,7 +141,7 @@ if __name__ == "__main__":
 
 
     print '--------------\nsampleFiles:'
-    print sampleFiles
+    print sorted(sampleFiles)
     print '----------------------'
     for sampleFile in sampleFiles:
         if 'DS' in str(sampleFile):
@@ -147,4 +151,5 @@ if __name__ == "__main__":
             feature.convertToFreshFormat(sampleFile)
 
 
-    ClusterBySAX(features[0], sampleFiles)
+    n_samples, labels = ClusterBySAX(features[0], sampleFiles)
+    PrintResults(labels, sampleFiles, n_samples)
