@@ -141,3 +141,8 @@ Version: 0.19.1
 Summary: SciPy: Scientific Library for Python
 
 Home-page: https://www.scipy.org
+
+### statsmodel
+Version: 0.8.0
+Summary: Statistical computations and models for Python
+Home-page: http://www.statsmodels.org/
