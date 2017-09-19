@@ -154,9 +154,9 @@ def ClassifyTestSet():
 def CrossValidateFullDataset():
 	#Tests a classifier performance with 10x cross-validation
 
-	data_dir = "Testbed/"
+	data_dir = "test/"
 	print "Loading Dataset..."
-	data = converters.load_any_file(data_dir + "training_dataset.csv")
+	data = converters.load_any_file(data_dir + "full_dataset.csv")
 	print "Dataset Loaded!"
 	
 	#Set class attribute
@@ -177,8 +177,8 @@ def CrossValidateFullDataset():
 	#(Useful for testing different combinations of attributes)
 	identifier_att = ".*id.*"
 	
-	timeseries_att = "raw.*"
-	#rmNoise_att = "rmNoise.*"
+	#timeseries_att = "raw.*"
+	rmNoise_att = "rmNoise.*"
 	#doppler_att = "doppler.*"
 	#phase_att = "phase.*"
 	#music_att = "music.*"
@@ -187,7 +187,7 @@ def CrossValidateFullDataset():
 	#music_agg_att = "music_agg.*"
 	#music_angles_att = "music_angles.*"
 
-	att_set = [timeseries_att]
+	att_set = [rmNoise_att]
 
 	##################################################
 	#Remove instances identifier attribute
@@ -201,7 +201,8 @@ def CrossValidateFullDataset():
 		for att in att_comb:
 			if(len(att) != len(att_set)):
 				data_filtered = FilterAttribute(att,data_filtered)
-
+		if str(list(set(att_set) - set(att_comb)))=='[]':
+			continue
 		print att_set
 		print att_comb
 		print colored("======================================================",'green')
@@ -211,8 +212,10 @@ def CrossValidateFullDataset():
 			print colored("Using attributes: " + str(list(set(att_set) - set(att_comb))), 'green')
 		print colored("======================================================",'green')
 
+		print data_dir
 
 		for i, cls in enumerate(classifiers):
+
 			evl = Evaluation(data_filtered)
 			evl.crossvalidate_model(cls, data_filtered, 10, Random(1))
 
@@ -224,8 +227,8 @@ def CrossValidateFullDataset():
 if __name__ == "__main__":
 	#Start WEKA execution
 	jvm.start(max_heap_size="4096m")
-	OnlineClassification()
-	#CrossValidateFullDataset()
+	#OnlineClassification()
+	CrossValidateFullDataset()
 	#ClassifyTestSet()
 	#Stop WEKA execution
 	print "over"
